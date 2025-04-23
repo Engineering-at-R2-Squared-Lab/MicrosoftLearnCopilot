@@ -16,10 +16,10 @@ namespace fetcher
         required public string Type { get; set; }
         required public string Title { get; set; }
         public int DurationInMinutes { get; set; }
-        public Rating Rating { get; set; }
+        public Rating? Rating { get; set; }
         required public double Popularity { get; set; }
-        public string IconUrl { get; set; }
-        public string SocialImageUrl { get; set; }
+        public string? IconUrl { get; set; }
+        public string? SocialImageUrl { get; set; }
         required public string Locale { get; set; }
         public DateTime LastModified { get; set; }
         required public string Url { get; set; }

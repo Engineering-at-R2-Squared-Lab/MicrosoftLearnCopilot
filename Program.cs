@@ -1,24 +1,28 @@
-using fetcher;
+using dotenv.net;
+using MicrosoftLearnCopilot.Core;
 
-class Program
+DotEnv.Load();
+
+Console.WriteLine(Environment.GetEnvironmentVariable("endpoint"));
+
+
+var kernel = new KernelService(
+    deploymentName: Environment.GetEnvironmentVariable("deploymentName") ?? "",
+    apiKey: Environment.GetEnvironmentVariable("apiKey") ?? "",
+    endpoint: Environment.GetEnvironmentVariable("endpoint") ?? ""
+    );
+
+do
 {
-    static async Task Main()
+    Console.Write("Enter your prompt (or 'exit' to quit): ");
+    string prompt = Console.ReadLine() ?? "";
+
+    if (prompt.ToLower() == "exit" | string.IsNullOrEmpty(prompt))
     {
-        using var httpClient = new HttpClient();
-        var catalogClient = new LearnCatalog(httpClient, "https://learn.microsoft.com/api/catalog/");
-
-        var modules = await catalogClient.GetModulesAsync();
-
-        Console.WriteLine($"Total modules fetched: {modules.Count}");
-
-        foreach (var module in modules)
-        {
-            Console.WriteLine($"Title: {module.Title}");
-            Console.WriteLine($"Summary: {module.Summary}");
-            Console.WriteLine($"Duration: {module.DurationInMinutes} minutes");
-            Console.WriteLine($"Rating: {module.Rating?.Average} ({module.Rating?.Count} reviews)");
-            Console.WriteLine($"URL: {module.Url}");
-            Console.WriteLine(new string('-', 50));
-        }
+        Console.WriteLine("Exiting...");
+        break;
     }
-}
+
+    string response = await kernel.chatCompletion(prompt);
+    Console.WriteLine($"Response: {response}");
+} while (true);
