@@ -1,4 +1,4 @@
-﻿using fetcher;
+using fetcher;
 
 class Program
 {

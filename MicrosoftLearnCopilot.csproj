@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <PackageReference Include="System.Net.Http.Json" Version="9.0.4" />
+    <PackageReference Include="dotenv.net" Version="3.2.1" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.47.0" />
   </ItemGroup>
 
 </Project>
