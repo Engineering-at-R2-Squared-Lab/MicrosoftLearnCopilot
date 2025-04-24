@@ -1,6 +1,8 @@
 using System.Security.Authentication;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+using MicrosoftLearnCopilot.Core.Function;
 namespace MicrosoftLearnCopilot.Core;
 
 public class KernelService
@@ -31,6 +33,7 @@ public class KernelService
             }
 
             var builder = Kernel.CreateBuilder().AddAzureOpenAIChatCompletion(deploymentName: this.deploymentName, apiKey: this.apiKey, endpoint: this.endpoint);
+            // builder.Plugins.AddFromType<MicrosoftLearnAPI>("MicrosoftLearnAPI");
             return builder.Build();
         }
         catch (Exception ex)
@@ -38,6 +41,8 @@ public class KernelService
             throw new AuthenticationException("Failed to initialize kernel, Please check your credentials.", ex);
         }
     }
+
+
 
     /// <summary>
     /// Sends a user prompt to the chat completion service and retrieves the generated response.
@@ -57,22 +62,37 @@ public class KernelService
     {
         try
         {
-            chatHistory.AddUserMessage(prompt);
+            // chatHistory.AddUserMessage(prompt);
 
-            // implement plugins here ...
-            // this.kernel.Plugins.Add();
+            chatHistory.AddUserMessage("I would like to get learning path please");
+
+
+            this.kernel.Plugins.AddFromType<MicrosoftLearnAPI>("MicrosoftLearnAPI");
+            // this.kernel.Plugins.
+
+            OpenAIPromptExecutionSettings settings = new OpenAIPromptExecutionSettings
+            {
+                MaxTokens = 1000,
+                FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+            };
 
             var chatCompletionService = this.kernel.GetRequiredService<IChatCompletionService>();
             var invokation = await chatCompletionService.GetChatMessageContentAsync(
-                this.chatHistory
+                this.chatHistory,
+                executionSettings: settings,
+                kernel: this.kernel
             );
+
+            // Console.WriteLine(this.chatHistory.ToString);
+
+            
 
             if (invokation == null || invokation.Content == null)
             {
                 throw new InvalidOperationException("Chat completion service returned a null response.");
             }
 
-            return invokation.Content;
+            return invokation.Content.ToString();
         }
         catch (Exception ex)
         {
