@@ -39,6 +39,20 @@ public class KernelService
         }
     }
 
+    /// <summary>
+    /// Sends a user prompt to the chat completion service and retrieves the generated response.
+    /// </summary>
+    /// <param name="prompt">The user input or prompt to be sent to the chat completion service.</param>
+    /// <returns>
+    /// A <see cref="Task{String}"/> representing the asynchronous operation. 
+    /// The task result contains the generated response from the chat completion service.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the chat completion service returns a null response or fails to process the request.
+    /// </exception>
+    /// <exception cref="UriFormatException">
+    /// Thrown when the URI format is invalid, typically due to an incorrect endpoint configuration.
+    /// </exception>
     public async Task<string> chatCompletion(string prompt)
     {
         try

@@ -1,28 +1,30 @@
 using dotenv.net;
 using MicrosoftLearnCopilot.Core;
+using MicrosoftLearnCopilot.Core.Function;
 
 DotEnv.Load();
 
-Console.WriteLine(Environment.GetEnvironmentVariable("endpoint"));
 
+// var kernel = new KernelService(
+//     deploymentName: Environment.GetEnvironmentVariable("deploymentName") ?? "",
+//     apiKey: Environment.GetEnvironmentVariable("apiKey") ?? "",
+//     endpoint: Environment.GetEnvironmentVariable("endpoint") ?? ""
+//     );
 
-var kernel = new KernelService(
-    deploymentName: Environment.GetEnvironmentVariable("deploymentName") ?? "",
-    apiKey: Environment.GetEnvironmentVariable("apiKey") ?? "",
-    endpoint: Environment.GetEnvironmentVariable("endpoint") ?? ""
-    );
+// do
+// {
+//     Console.Write("Enter your prompt (or 'exit' to quit): ");
+//     string prompt = Console.ReadLine() ?? "";
 
-do
-{
-    Console.Write("Enter your prompt (or 'exit' to quit): ");
-    string prompt = Console.ReadLine() ?? "";
+//     if (prompt.ToLower() == "exit" | string.IsNullOrEmpty(prompt))
+//     {
+//         Console.WriteLine("Exiting...");
+//         break;
+//     }
 
-    if (prompt.ToLower() == "exit" | string.IsNullOrEmpty(prompt))
-    {
-        Console.WriteLine("Exiting...");
-        break;
-    }
+//     string response = await kernel.chatCompletion(prompt);
+//     Console.WriteLine($"Response: {response}");
+// } while (true);
 
-    string response = await kernel.chatCompletion(prompt);
-    Console.WriteLine($"Response: {response}");
-} while (true);
+var a = new MicrosoftLearnAPI();
+await a.getLearningPath("azure");
