@@ -82,9 +82,6 @@ public class KernelService
             }
             throw new InvalidOperationException("Failed to get chat completion.", ex);
         }
-
-
     }
-
 }
 
