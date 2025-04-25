@@ -33,7 +33,7 @@ public class KernelService
             }
 
             var builder = Kernel.CreateBuilder().AddAzureOpenAIChatCompletion(deploymentName: this.deploymentName, apiKey: this.apiKey, endpoint: this.endpoint);
-            // builder.Plugins.AddFromType<MicrosoftLearnAPI>("MicrosoftLearnAPI");
+            builder.Plugins.AddFromType<MicrosoftLearnAPI>("MicrosoftLearnAPI");
             return builder.Build();
         }
         catch (Exception ex)
@@ -62,13 +62,11 @@ public class KernelService
     {
         try
         {
-            // chatHistory.AddUserMessage(prompt);
-
-            chatHistory.AddUserMessage("I would like to get learning path please");
+            chatHistory.AddUserMessage(prompt);
 
 
-            this.kernel.Plugins.AddFromType<MicrosoftLearnAPI>("MicrosoftLearnAPI");
-            // this.kernel.Plugins.
+
+            // this.kernel.Plugins.AddFromType<MicrosoftLearnAPI>("MicrosoftLearnAPI");
 
             OpenAIPromptExecutionSettings settings = new OpenAIPromptExecutionSettings
             {
@@ -85,7 +83,7 @@ public class KernelService
 
             // Console.WriteLine(this.chatHistory.ToString);
 
-            
+
 
             if (invokation == null || invokation.Content == null)
             {

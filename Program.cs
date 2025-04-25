@@ -1,9 +1,7 @@
 using dotenv.net;
 using MicrosoftLearnCopilot.Core;
-using MicrosoftLearnCopilot.Core.Function;
 
 DotEnv.Load();
-
 
 var kernel = new KernelService(
     deploymentName: Environment.GetEnvironmentVariable("deploymentName") ?? "",
@@ -26,5 +24,3 @@ do
     Console.WriteLine($"Response: {response}");
 } while (true);
 
-// var a = new MicrosoftLearnAPI();
-// await a.getLearningPath("azure");

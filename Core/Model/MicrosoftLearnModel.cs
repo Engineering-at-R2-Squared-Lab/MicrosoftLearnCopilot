@@ -326,9 +326,11 @@ public class MicrosoftLearnModel
         ip_admin,
     }
 
-    public class LearningPathItem{
-        public string title { get; set; }
-        public string summary { get; set; }
-        public string url { get; set; }
+    public class LearningPathItem
+    {
+        public required string title { get; set; }
+        public required string summary { get; set; }
+        public required string url { get; set; }
+        public required List<String> products { get; set; }
     }
 }

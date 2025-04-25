@@ -2,6 +2,9 @@ using System.ComponentModel;
 using Microsoft.SemanticKernel;
 using Newtonsoft.Json.Linq;
 using MicrosoftLearnCopilot.Core.Model;
+using FuzzySharp;
+using FuzzySharp.SimilarityRatio;
+using FuzzySharp.SimilarityRatio.Scorer.Composite;
 namespace MicrosoftLearnCopilot.Core.Function;
 
 public class MicrosoftLearnAPI
@@ -10,7 +13,7 @@ public class MicrosoftLearnAPI
 
     [KernelFunction("getLearningPath")]
     [Description("Get Learning Path")]
-    public async Task<List<MicrosoftLearnModel.LearningPathItem>> getLearningPath()
+    public async Task<List<MicrosoftLearnModel.LearningPathItem>> getLearningPath(string query)
     {
         var url = "https://learn.microsoft.com/api/catalog/?type=learningPaths";
         var response = await httpClient.GetAsync(url);
@@ -19,28 +22,51 @@ public class MicrosoftLearnAPI
         {
             var content = await response.Content.ReadAsStringAsync();
             JObject root = JObject.Parse(content);
-            JArray lp = (JArray)root["learningPaths"];
+            JArray lp = root["learningPaths"] as JArray ?? new JArray();
 
-            var filteredLP = lp?.Take(5).Select(lp => new MicrosoftLearnModel.LearningPathItem
+            var allItems = lp?.Select(
+                lpItems => new MicrosoftLearnModel.LearningPathItem
+                {
+                    title = lpItems["title"]?.ToString() ?? string.Empty,
+                    summary = lpItems["summary"]?.ToString() ?? string.Empty,
+                    url = lpItems["url"]?.ToString() ?? string.Empty,
+                    products = lpItems["products"]?.Select(p => p.ToString()).ToList() ?? new List<string>()
+                }
+            );
+
+
+            if (string.IsNullOrEmpty(query))
             {
-                summary = lp["summary"]?.ToString() ?? string.Empty,
-                title = lp["title"]?.ToString() ?? string.Empty,
-                url = lp["url"]?.ToString() ?? string.Empty,
-            }).ToList();
+                return allItems?.Take(5).ToList() ?? new List<MicrosoftLearnModel.LearningPathItem>();
+            }
 
-            Console.WriteLine(lp.ToString());
+            // Fuzzy search for the query in the title and summary of the learning paths
+            var results = Process.ExtractSorted(query, allItems?.Select(
+                item => $"{item.title} - {item.summary} - {item.products}"),
+                s => s,
+                ScorerCache.Get<WeightedRatioScorer>()
+            );
 
-            return filteredLP ?? new List<MicrosoftLearnModel.LearningPathItem>();
+            Console.WriteLine($"Found {results?.Count()} learning paths matching the query '{query}'.");
 
-            throw new NotImplementedException("Not implemented yet.");
+            var filteredLP = results?
+                .Where(r => r.Score > 60)
+                .Select(r => allItems?.ToList()[r.Index])
+                .Take(5)
+                .ToList();
+
+            Console.WriteLine($"Found {filteredLP?.Count} learning paths matching the query '{query}'.");
+
+            return filteredLP?.Where(item => item != null).Cast<MicrosoftLearnModel.LearningPathItem>().ToList()
+                   ?? new List<MicrosoftLearnModel.LearningPathItem>();
+
 
         }
         else
         {
             Console.WriteLine($"Error: {response.StatusCode}");
-            return null;
+            return new List<MicrosoftLearnModel.LearningPathItem>();
         }
     }
-
 
 }
