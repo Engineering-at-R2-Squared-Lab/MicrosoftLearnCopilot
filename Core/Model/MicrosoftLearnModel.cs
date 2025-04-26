@@ -326,11 +326,30 @@ public class MicrosoftLearnModel
         ip_admin,
     }
 
+    public class ModuleItem
+    {
+        public required string title { get; set; }
+        public required string summary { get; set; }
+        public required string url { get; set; }
+        public required string firstUnitUrl { get; set; }
+        public required string uid { get; set; }
+        public required List<String> products { get; set; }
+        public required List<String> units { get; set; }
+    }
+
+    public class UnitItem
+    {
+        public required string uid { get; set; }
+    }
+
     public class LearningPathItem
     {
         public required string title { get; set; }
         public required string summary { get; set; }
         public required string url { get; set; }
+        public required string uid { get; set; }
+        public required string firstModuleUrl { get; set; }
         public required List<String> products { get; set; }
+        public required List<String> modules { get; set; }
     }
 }

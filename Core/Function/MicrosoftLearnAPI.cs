@@ -30,10 +30,12 @@ public class MicrosoftLearnAPI
                     title = lpItems["title"]?.ToString() ?? string.Empty,
                     summary = lpItems["summary"]?.ToString() ?? string.Empty,
                     url = lpItems["url"]?.ToString() ?? string.Empty,
-                    products = lpItems["products"]?.Select(p => p.ToString()).ToList() ?? new List<string>()
+                    products = lpItems["products"]?.Select(p => p.ToString()).ToList() ?? new List<string>(),
+                    modules = lpItems["modules"]?.Select(m => m.ToString()).ToList() ?? new List<string>(),
+                    uid = lpItems["uid"]?.ToString() ?? string.Empty,
+                    firstModuleUrl = lpItems["firstModuleUrl"]?.ToString() ?? string.Empty
                 }
-            );
-
+            ).ToList();
 
             if (string.IsNullOrEmpty(query))
             {
@@ -51,7 +53,7 @@ public class MicrosoftLearnAPI
 
             var filteredLP = results?
                 .Where(r => r.Score > 60)
-                .Select(r => allItems?.ToList()[r.Index])
+                .Select(r => allItems?[r.Index])
                 .Take(5)
                 .ToList();
 
@@ -59,8 +61,6 @@ public class MicrosoftLearnAPI
 
             return filteredLP?.Where(item => item != null).Cast<MicrosoftLearnModel.LearningPathItem>().ToList()
                    ?? new List<MicrosoftLearnModel.LearningPathItem>();
-
-
         }
         else
         {
@@ -69,4 +69,73 @@ public class MicrosoftLearnAPI
         }
     }
 
+    [KernelFunction("getModules")]
+    [Description("Get modules for a given module UID")]
+    public async Task<List<MicrosoftLearnModel.ModuleItem>> getModules(string moduleId)
+    {
+        var url = $"https://learn.microsoft.com/api/catalog/?type=modules&uid={moduleId}";
+        var response = await httpClient.GetAsync(url);
+        Console.WriteLine(response.StatusCode);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            JObject root = JObject.Parse(content);
+            JArray modules = root["modules"] as JArray ?? new JArray();
+
+            var moduleList = modules.Select(m => new MicrosoftLearnModel.ModuleItem
+            {
+                title = m["title"]?.ToString() ?? string.Empty,
+                summary = m["summary"]?.ToString() ?? string.Empty,
+                url = m["url"]?.ToString() ?? string.Empty,
+                products = m["products"]?.Select(p => p.ToString()).ToList() ?? new List<string>(),
+                units = m["units"]?.Select(u => u.ToString()).ToList() ?? new List<string>(),
+                firstUnitUrl = m["firstUnitUrl"]?.ToString() ?? string.Empty,
+                uid = m["uid"]?.ToString() ?? string.Empty
+            }).ToList();
+
+            return moduleList;
+        }
+        else
+        {
+            Console.WriteLine($"Error: {response.StatusCode}");
+            return new List<MicrosoftLearnModel.ModuleItem>();
+        }
+    }
+
+    [KernelFunction("getUnitsForModule")]
+    [Description("Get units for a given module UID")]
+    public async Task<List<MicrosoftLearnModel.UnitItem>> getUnitsForModule(string moduleUid)
+    {
+        var url = $"https://learn.microsoft.com/api/catalog/?type=modules&uid={moduleUid}";
+        var response = await httpClient.GetAsync(url);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            JObject root = JObject.Parse(content);
+            JArray modules = root["modules"] as JArray ?? new JArray();
+            var module = modules.FirstOrDefault(m => m["uid"]?.ToString() == moduleUid);
+
+            if (module != null && module["units"] is JArray units)
+            {
+                var unitList = units.Select(u => new MicrosoftLearnModel.UnitItem
+                {
+                    uid = u.ToString(),
+                }).ToList();
+
+                return unitList;
+            }
+            else
+            {
+                Console.WriteLine($"No units found for moduleUid: {moduleUid}");
+                return new List<MicrosoftLearnModel.UnitItem>();
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Error: {response.StatusCode}");
+            return new List<MicrosoftLearnModel.UnitItem>();
+        }
+    }
 }
