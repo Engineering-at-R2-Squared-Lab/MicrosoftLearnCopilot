@@ -23,7 +23,6 @@ do
         break;
     }
 
-    // Get learning paths, modules, units
     var results = await orchestrator.GetLearningPathsWithModulesAndUnits(prompt);
 
     if (results.Count == 0)
@@ -32,7 +31,6 @@ do
         continue;
     }
 
-    // For demo, pick the first module of the first learning path
     var firstLp = results.First();
     var firstModule = firstLp.Modules.FirstOrDefault();
 
@@ -42,7 +40,7 @@ do
         continue;
     }
 
-    // Construct URLs for all units
+    // Construct URLs for all units with robust prefix handling
     var firstUnitUrl = firstModule.Module.firstUnitUrl;
     var lastSlashIndex = firstUnitUrl.LastIndexOf('/');
     var moduleBaseUrl = firstUnitUrl.Substring(0, lastSlashIndex);
@@ -51,36 +49,50 @@ do
     var unitUrls = new List<string>();
     var allUnitContents = new List<string>();
 
+    // Try all possible prefixes and slug
+    async Task<(string? url, string? content)> TryUnitUrlFormats(string baseUrl, string slug, int idx)
+    {
+        var prefixes = new[] {
+        $"{idx + 1}-", // 1-based
+        $"{(idx + 1).ToString("D2")}-", // 01-, 02-, etc.
+        $"{idx}-", // 0-based
+        $"{(idx).ToString("D2")}-", // 00-, 01-, etc.
+        "0-", "00-", "1-", "01-", "2-", "4-", "6-"
+    };
+
+        foreach (var prefix in prefixes.Distinct())
+        {
+            var url = $"{baseUrl}/{prefix}{slug}";
+            Console.WriteLine($"Trying: {url}");
+            var content = await orchestrator.GetUnitContent(url);
+            if (!string.IsNullOrWhiteSpace(content))
+                return (url, content);
+        }
+        {
+            var url = $"{baseUrl}/{slug}";
+            Console.WriteLine($"Trying: {url}");
+            var content = await orchestrator.GetUnitContent(url);
+            if (!string.IsNullOrWhiteSpace(content))
+                return (url, content);
+        }
+        return (null, null);
+    }
+
     for (int i = 0; i < firstModule.Units.Count; i++)
     {
         var unitUid = firstModule.Units[i].uid;
         var lastPart = unitUid.Split('.').Last().Replace('_', '-');
-        var numberedUrl = $"{moduleBaseUrl}/{i + 1}-{lastPart}";
-        var slugUrl = $"{moduleBaseUrl}/{lastPart}";
 
-        // Try numbered format first, fallback to slug format if fetch fails
-        string content = await orchestrator.GetUnitContent(numberedUrl);
-        if (string.IsNullOrWhiteSpace(content))
+        var (url, content) = await TryUnitUrlFormats(moduleBaseUrl, lastPart, i);
+        if (!string.IsNullOrWhiteSpace(content) && url != null)
         {
-            Console.WriteLine($"Failed to fetch {numberedUrl}, trying slug format...");
-            content = await orchestrator.GetUnitContent(slugUrl);
-            if (!string.IsNullOrWhiteSpace(content))
-            {
-                Console.WriteLine($"Fetched using slug format: {slugUrl}");
-                unitUrls.Add(slugUrl);
-            }
-            else
-            {
-                Console.WriteLine($"Failed to fetch both formats for unit: {unitUid}");
-            }
+            unitUrls.Add(url);
+            allUnitContents.Add(content);
         }
         else
         {
-            unitUrls.Add(numberedUrl);
+            Console.WriteLine($"Failed to fetch any format for unit: {unitUid}");
         }
-
-        if (!string.IsNullOrWhiteSpace(content))
-            allUnitContents.Add(content);
     }
 
     var combinedContent = string.Join("\n\n", allUnitContents);
