@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using dotenv.net;
 using MicrosoftLearnCopilot.Core;
 using MicrosoftLearnCopilot.Core.Function;
@@ -40,7 +41,6 @@ do
         continue;
     }
 
-    // Construct URLs for all units with robust prefix handling
     var firstUnitUrl = firstModule.Module.firstUnitUrl;
     var lastSlashIndex = firstUnitUrl.LastIndexOf('/');
     var moduleBaseUrl = firstUnitUrl.Substring(0, lastSlashIndex);
@@ -83,6 +83,27 @@ do
         var unitUid = firstModule.Units[i].uid;
         var lastPart = unitUid.Split('.').Last().Replace('_', '-');
 
+        if (unitUrls.Count > 0)
+        {
+            var previousUrl = unitUrls.Last();
+
+            var lastSlashInPrevUrl = previousUrl.LastIndexOf('/');
+            var baseUrl = previousUrl.Substring(0, lastSlashInPrevUrl);
+            var newUrl = $"{baseUrl}/{lastPart}";
+
+            var unitContent = await orchestrator.GetUnitContent(newUrl);
+            if (!string.IsNullOrWhiteSpace(unitContent))
+            {
+                unitUrls.Add(newUrl);
+                allUnitContents.Add(unitContent);
+                continue;
+            }
+            else
+            {
+                Console.WriteLine($"Previous pattern failed, fallback to TryUnitUrlFormats...");
+            }
+        }
+
         var (url, content) = await TryUnitUrlFormats(moduleBaseUrl, lastPart, i);
         if (!string.IsNullOrWhiteSpace(content) && url != null)
         {
@@ -97,7 +118,6 @@ do
 
     var combinedContent = string.Join("\n\n", allUnitContents);
 
-    // Ask LLM to answer user's question based on all unit contents
     string llmAnswer = await orchestrator.SummarizeOrAnswerFromUnit(prompt, combinedContent, kernel);
 
     Console.WriteLine($"\n=== LLM Answer Based on All Units ===\n{llmAnswer}\n");
