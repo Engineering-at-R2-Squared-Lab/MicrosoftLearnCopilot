@@ -49,22 +49,40 @@ do
     moduleBaseUrl = moduleBaseUrl.Substring(0, moduleBaseUrl.LastIndexOf('/'));
 
     var unitUrls = new List<string>();
+    var allUnitContents = new List<string>();
+
     for (int i = 0; i < firstModule.Units.Count; i++)
     {
         var unitUid = firstModule.Units[i].uid;
         var lastPart = unitUid.Split('.').Last().Replace('_', '-');
-        var url = $"{moduleBaseUrl}/{i + 1}-{lastPart}";
-        unitUrls.Add(url);
-    }
+        var numberedUrl = $"{moduleBaseUrl}/{i + 1}-{lastPart}";
+        var slugUrl = $"{moduleBaseUrl}/{lastPart}";
 
-    // Fetch and concatenate all unit contents
-    var allUnitContents = new List<string>();
-    foreach (var url in unitUrls)
-    {
-        var content = await orchestrator.GetUnitContent(url);
+        // Try numbered format first, fallback to slug format if fetch fails
+        string content = await orchestrator.GetUnitContent(numberedUrl);
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            Console.WriteLine($"Failed to fetch {numberedUrl}, trying slug format...");
+            content = await orchestrator.GetUnitContent(slugUrl);
+            if (!string.IsNullOrWhiteSpace(content))
+            {
+                Console.WriteLine($"Fetched using slug format: {slugUrl}");
+                unitUrls.Add(slugUrl);
+            }
+            else
+            {
+                Console.WriteLine($"Failed to fetch both formats for unit: {unitUid}");
+            }
+        }
+        else
+        {
+            unitUrls.Add(numberedUrl);
+        }
+
         if (!string.IsNullOrWhiteSpace(content))
             allUnitContents.Add(content);
     }
+
     var combinedContent = string.Join("\n\n", allUnitContents);
 
     // Ask LLM to answer user's question based on all unit contents

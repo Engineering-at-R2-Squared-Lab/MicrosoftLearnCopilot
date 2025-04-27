@@ -75,7 +75,6 @@ public class MicrosoftLearnAPI
     {
         var url = $"https://learn.microsoft.com/api/catalog/?type=modules&uid={moduleId}";
         var response = await httpClient.GetAsync(url);
-        Console.WriteLine(response.StatusCode);
 
         if (response.IsSuccessStatusCode)
         {
@@ -128,7 +127,6 @@ public class MicrosoftLearnAPI
             }
             else
             {
-                Console.WriteLine($"No units found for moduleUid: {moduleUid}");
                 return new List<MicrosoftLearnModel.UnitItem>();
             }
         }
