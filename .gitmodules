@@ -1,0 +1,3 @@
+[submodule "MicrosoftLearnCopilot.WebApps/Client"]
+	path = MicrosoftLearnCopilot.WebApps/Client
+	url = git@github.com:Engineering-at-R2-Squared-Lab/mslearn-client.git
