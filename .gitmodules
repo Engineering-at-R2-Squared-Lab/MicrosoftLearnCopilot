@@ -1,0 +1,3 @@
+[submodule "client"]
+	path = client
+	url = git@github.com:Engineering-at-R2-Squared-Lab/mslearn-client.git
