@@ -14,6 +14,11 @@ public class KernelService
 
     private ChatHistory chatHistory;
 
+    public void setChatHistory(ChatHistory history)
+    {
+        this.chatHistory = history;
+    }
+
     public KernelService(string deploymentName, string apiKey, string endpoint)
     {
         this.deploymentName = deploymentName;
